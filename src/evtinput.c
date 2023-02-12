@@ -71,11 +71,16 @@ void config_evt_device(char *path, int evt_type)
 		return;
 	}
 
+	
+
+	printf("  attrs:\n");
+
 	// test all the bits in evtype_b
 	for (int yalv = 0; yalv < EV_MAX; yalv++)
 	{
 		if (evt_test_bit(yalv, evtype_b))
 		{
+			printf("    ");
 			switch (yalv)
 			{
 			case EV_SYN:
@@ -111,10 +116,10 @@ void config_evt_device(char *path, int evt_type)
 				printf("Unknown(0x%04hx) ", yalv);
 				break;
 			}
+
+			printf("\n");
 		}
 	}
-
-	printf("\n");
 
 	unsigned char key_bits[KEY_MAX / 8 + 1];
 	ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_bits)), &key_bits);
@@ -128,6 +133,10 @@ void config_evt_device(char *path, int evt_type)
 	{
 		printf("Has touch\n");
 	}
+
+	evt_devices[id].evt_type = evt_type;
+	evt_devices[id].fd = fd;
+	evt_devices[id].is_enabled = true;
 }
 
 void EvtInitDevices()
