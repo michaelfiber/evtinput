@@ -37,6 +37,8 @@ bool ends_with(char *haystack, char *needle)
 
 void config_evt_device(char *path, int evt_type)
 {
+	printf("Config %s\n", supported_types[evt_type]);
+	
 	int fd = open(path, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 	{
