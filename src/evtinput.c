@@ -8,9 +8,6 @@
 #include "evtinput.h"
 #include "stdbool.h"
 
-// temp var to control log flows during debugging.
-int count = 0;
-
 char supported_types[EVT_TYPE_COUNT][64] = {
 	"event-mouse",
 	"event-kbd",
@@ -37,6 +34,8 @@ bool ends_with(char *haystack, char *needle)
 
 void config_evt_device(char *path, int evt_type)
 {
+	printf("Config %s\n", path);
+
 	int fd = open(path, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 	{
@@ -69,11 +68,16 @@ void config_evt_device(char *path, int evt_type)
 		return;
 	}
 
+	
+
+	printf("  attrs:\n");
+
 	// test all the bits in evtype_b
 	for (int yalv = 0; yalv < EV_MAX; yalv++)
 	{
 		if (evt_test_bit(yalv, evtype_b))
 		{
+			printf("    ");
 			switch (yalv)
 			{
 			case EV_SYN:
@@ -109,10 +113,10 @@ void config_evt_device(char *path, int evt_type)
 				printf("Unknown(0x%04hx) ", yalv);
 				break;
 			}
+
+			printf("\n");
 		}
 	}
-
-	printf("\n");
 
 	unsigned char key_bits[KEY_MAX / 8 + 1];
 	ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_bits)), &key_bits);
@@ -126,6 +130,10 @@ void config_evt_device(char *path, int evt_type)
 	{
 		printf("Has touch\n");
 	}
+
+	evt_devices[id].evt_type = evt_type;
+	evt_devices[id].fd = fd;
+	evt_devices[id].is_enabled = true;
 }
 
 void InitEvtDevices()
@@ -160,11 +168,27 @@ void InitEvtDevices()
 
 void PollEvtDevices(void)
 {
-	count++;
-	if (count > 60 * 10)
+	struct input_event event = {0};
+
+	for (int d = 0; d < MAX_EVT_DEVICES; d++)
 	{
-		printf("PollEvtDevices\n");
-		count = 0;
+		if (!evt_devices[d].is_enabled)
+		{
+			continue;
+		}
+
+		while (read(evt_devices[d].fd, &event, sizeof(event)) == sizeof(event))
+		{
+			switch(event.type)
+			{
+				case EV_REL:
+					//printf("Relative movement\n");
+					break;
+				case EV_ABS:
+					//printf("Absolute movement\n");
+					break;
+			}
+		}
 	}
 }
 

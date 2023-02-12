@@ -1,9 +1,15 @@
 #include "evtinput.h"
+#include "unistd.h"
 
-int main(void) 
+int main(void)
 {
 	InitEvtDevices();
-	PollEvtDevices();
+
+	while (true)
+	{
+		PollEvtDevices();
+	}
+
 	CloseEvtDevices();
 	return 0;
 }
