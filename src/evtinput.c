@@ -106,7 +106,7 @@ void config_evt_device(char *path, int evt_type)
 				break;
 				;
 			default:
-				printf("Unknown(0x%04hx) ");
+				printf("Unknown(0x%04hx) ", yalv);
 				break;
 			}
 		}
