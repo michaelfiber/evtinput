@@ -1,9 +1,7 @@
-#ifndef EVTINPUT_H
-#define EVTINPUT_H 1
+#ifndef _EVTINPUT_H
+#define _EVTINPUT_H 1
 
 #include "stdbool.h"
-
-// temp for logging during debug.
 
 #ifndef MAX_EVT_DEVICES
 #define MAX_EVT_DEVICES 10
@@ -20,15 +18,11 @@
 #define MAX_FILEPATH_LENGTH 4096 
 #endif
 
-#define evt_test_bit(yalv, abs_b) ((((char *)abs_b)[yalv / 8] & (1 << yalv % 8)) > 0)
-
 #define EVT_TYPE_MOUSE			0
 #define EVT_TYPE_KEYBOARD		1
 #define EVT_TYPE_JOYSTICK		2
 #define EVT_TYPE_TOUCHSCREEN 	3
 #define EVT_TYPE_COUNT			4
-
-#define evt_key_check(b,k) (b[k/8] & (1 << (k % 8)))
 
 typedef struct EvtDevice
 {
@@ -37,8 +31,8 @@ typedef struct EvtDevice
 	int fd;
 } EvtDevice;
 
-void InitEvtDevices(void);
-void PollEvtDevices(void);
-void CloseEvtDevices(void);
+void EvtInitDevices(void);
+void EvtPollDevices(void);
+void EvtCloseDevices(void);
 
-#endif
+#endif // _EVTINPUT_H

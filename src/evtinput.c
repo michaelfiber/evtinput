@@ -8,8 +8,8 @@
 #include "evtinput.h"
 #include "stdbool.h"
 
-// temp var to control log flows during debugging.
-int count = 0;
+#define evt_key_check(b,k) (b[k/8] & (1 << (k % 8)))
+#define evt_test_bit(yalv, abs_b) ((((char *)abs_b)[yalv / 8] & (1 << yalv % 8)) > 0)
 
 char supported_types[EVT_TYPE_COUNT][64] = {
 	"event-mouse",
@@ -38,7 +38,7 @@ bool ends_with(char *haystack, char *needle)
 void config_evt_device(char *path, int evt_type)
 {
 	printf("Config %s\n", supported_types[evt_type]);
-	
+
 	int fd = open(path, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 	{
@@ -130,10 +130,10 @@ void config_evt_device(char *path, int evt_type)
 	}
 }
 
-void InitEvtDevices()
+void EvtInitDevices()
 {
 	char path[MAX_FILEPATH_LENGTH] = {0};
-	printf("InitEvtDevices\n");
+	printf("EvtInitDevices\n");
 	DIR *d;
 	struct dirent *ent;
 	d = opendir(DEFAULT_EVDEV_PATH);
@@ -160,17 +160,11 @@ void InitEvtDevices()
 	}
 }
 
-void PollEvtDevices(void)
+void EvtPollDevices(void)
 {
-	count++;
-	if (count > 60 * 10)
-	{
-		printf("PollEvtDevices\n");
-		count = 0;
-	}
 }
 
-void CloseEvtDevices(void)
+void EvtCloseDevices(void)
 {
 	for (int i = 0; i < MAX_EVT_DEVICES; i++)
 	{
