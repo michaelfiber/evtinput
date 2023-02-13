@@ -21,6 +21,45 @@ EvtDevice evt_devices[MAX_EVT_DEVICES] = {0};
 
 struct input_event event_b[64] = {0};
 
+const char *const AbsAxisNames[ABS_MISC + 1] = {
+	[0 ... ABS_MISC] = "?",
+	[ABS_X] = "ABS_X",
+	[ABS_Y] = "ABS_Y",
+	[ABS_Z] = "ABS_Z",
+	[ABS_RX] = "ABS_RX",
+	[ABS_RY] = "ABS_RY",
+	[ABS_RZ] = "ABS_RZ",
+	[ABS_THROTTLE] = "ABS_THROTTLE",
+	[ABS_RUDDER] = "ABS_RUDDER",
+	[ABS_WHEEL] = "ABS_WHEEL",
+	[ABS_GAS] = "ABS_GAS",
+	[ABS_BRAKE] = "ABS_BRAKE",
+	[ABS_HAT0X] = "ABS_HAT0X",
+	[ABS_HAT0Y] = "ABS_HAT0Y",
+	[ABS_HAT1X] = "ABS_HAT1X",
+	[ABS_HAT1Y] = "ABS_HAT1Y",
+	[ABS_HAT2X] = "ABS_HAT2X",
+	[ABS_HAT2Y] = "ABS_HAT2Y",
+	[ABS_HAT3X] = "ABS_HAT3X",
+	[ABS_HAT3Y] = "ABS_HAT3Y",
+	[ABS_PRESSURE] = "ABS_PRESSURE",
+	[ABS_DISTANCE] = "ABS_DISTANCE",
+	[ABS_TILT_X] = "ABS_TILT_X",
+	[ABS_TILT_Y] = "ABS_TILT_Y",
+	[ABS_TOOL_WIDTH] = "ABS_TOOL_WIDTH",
+	[ABS_VOLUME] = "ABS_VOLUME",
+	[ABS_MISC] = "ABS_MISC"};
+
+const char *const AbsAxisPropNames[EVT_AXIS_PROP_COUNT] = {
+	[0 ... EVT_AXIS_PROP_COUNT-1] = "?",
+	[EVT_AXIS_FLAT] = "FLAT",
+	[EVT_AXIS_FUZZ] = "FUZZ",
+	[EVT_AXIS_MAX] = "MAX",
+	[EVT_AXIS_MIN] = "MIN",
+	[EVT_AXIS_RES] = "RES",
+	[EVT_AXIS_VALUE] = "VALUE"
+};
+
 /// FROM EVTEST
 
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -948,6 +987,8 @@ void config_evt_device(char *path, int evt_type)
 {
 	printf("Config %s\n", supported_types[evt_type]);
 
+	int abs[EVT_AXIS_PROP_COUNT] = {0};
+
 	int fd = open(path, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 	{
@@ -994,8 +1035,23 @@ void config_evt_device(char *path, int evt_type)
 				if (evt_test_bit(code, bit[type]))
 				{
 					printf("    Event code %d (%s)\n", code, codename(type, code));
-					if (type == EV_ABS)
-						print_absdata(fd, code);
+					if (type == EV_ABS && code <= ABS_MISC)
+					{
+						printf("Found axis: %s\n", AbsAxisNames[code]);
+						
+						// code is an absolute axis.
+						memset(abs, 0, sizeof(abs));
+						ioctl(fd, EVIOCGABS(code), abs);
+						
+						evt_devices[id].abs_axis[code] = malloc(sizeof(int) * EVT_AXIS_PROP_COUNT);
+						
+						for (int pi = 0; pi < EVT_AXIS_PROP_COUNT; pi++)
+						{
+							printf("  Axis Prop: %s: %d\n", AbsAxisPropNames[pi], abs[pi]);
+							evt_devices[id].abs_axis[code]->props[pi] = abs[pi];
+						}
+						//print_absdata(fd, code);
+					}
 				}
 			}
 		}
@@ -1006,18 +1062,23 @@ void config_evt_device(char *path, int evt_type)
 	evt_devices[id].is_enabled = true;
 }
 
-void poll_device(EvtDevice *d)
-{
-	int rd = read(d->fd, event_b, sizeof(event_b));
+struct input_event ev[64];
 
-	if (rd <= 0 || rd < sizeof(struct input_event))
+int poll_device(EvtDevice *d)
+{	
+	int rd = read(d->fd, ev, sizeof(ev));
+	if (rd < sizeof(struct input_event))
 	{
-		return;
+		printf("Read %d bytes but expected %ld\n", rd, sizeof(struct input_event));
+		return 1;
 	}
 
-	for (int i = 0; i < rd / sizeof(event_b); i++)
+	for (int i = 0; i < rd / sizeof(struct input_event); i++)
 	{
+
 	}
+
+	return 0;
 }
 
 void EvtInitDevices()
